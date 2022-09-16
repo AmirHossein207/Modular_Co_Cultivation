@@ -1,0 +1,36 @@
+clc
+clear
+close all
+
+format short g
+warning off all
+
+%% Solver checking
+
+solverOk = changeCobraSolver('gurobi','all');
+
+%% Load model
+load('iJO1366.mat');
+model = iJO1366;
+%% add pathway
+model = changeRxnBounds(model, {'EX_glc__D_e','EX_o2_e'},[-10, -15],'l');
+
+model = addReaction(model,'TYRCBOX', 'metaboliteList', {'h_c','tyr__L_c',...
+    'co2_c','tym_c'}, 'stoichCoeffList', [-1;-1;1;1],...
+    'lowerBound',0,'upperBound',1000);
+model = addReaction(model,'TYROXDAc', 'metaboliteList', {'h2o_c','o2_c',...
+    'tym_c','h2o2_c','nh4_c','4hoxpacd_c'}, 'stoichCoeffList', [-1;-1;-1;1;1;1],...
+    'lowerBound',0,'upperBound',1000);
+%%%%% add metabolite 4-tyrosol
+model = addReaction(model,'TYROSOL', 'metaboliteList', {'4hoxpacd_c','h_c',...
+    'nadh_c','nad_c','4_tyrosol_c'}, 'stoichCoeffList', [-1;-1;-1;1;1],...
+    'lowerBound',0,'upperBound',1000);
+%%%%% add metabolite sal
+model = addReaction(model,'SALID', 'metaboliteList', {'adp_c','atp_c',...
+    '5dpmev_c','5pmev_c'}, 'stoichCoeffList', [1;-1;1;-1],...
+    'lowerBound',0,'upperBound',1000);
+
+
+model = addReaction(model,'TXDN', 'metaboliteList', {'salid_c','salid_e'},...
+    'stoichCoeffList', [-1;1;], 'lowerBound',0,'upperBound',1000);
+[model, EX_salid_e] = addExchangeRxn(model, 'salid_e',0,1000);
